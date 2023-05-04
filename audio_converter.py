@@ -206,7 +206,7 @@ def main(args):
 
     # Convert the input format files to the output format using a ThreadPoolExecutor
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
         futures = []
         for input_file in audio_files:
             futures.append(executor.submit(convert_audio, input_file, output_format, input_format, audio_quality, overwrite))
@@ -256,6 +256,7 @@ if __name__ == '__main__':
     parser.add_argument('--overwrite', action='store_true', help='Overwrite existing output files if they already exist')
     parser.add_argument('--log-level', default='info', type=str, help='Logging level: debug, info (default), warning, error, or critical')
     parser.add_argument('-q', '--audio-quality', default='high', choices=['low', 'medium', 'high'], type=str, help='Audio quality for output files (default: high)')
+    parser.add_argument('--max-workers', default=None, type=int, help='Maximum number of worker threads to use for audio conversion (default: number of CPUs)')
 
     args = parser.parse_args()
     
