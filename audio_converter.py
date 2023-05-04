@@ -120,6 +120,10 @@ def main(args):
     overwrite = args.overwrite
     log_level = args.log_level.upper()
 
+    if input_format == output_format:
+        logging.error("Input and output formats are the same. Conversion not needed.")
+        return
+
     # Parse and assign command-line arguments
     log_level_obj = getattr(logging, log_level, None)
     if not isinstance(log_level_obj, int):
@@ -184,8 +188,8 @@ if __name__ == '__main__':
     # Set up the argument parser and parse the command-line arguments
     parser = argparse.ArgumentParser(description='Convert audio files in a given folder and its subfolders.')
     parser.add_argument('-f', '--folder-path', required=True, type=str, help='Path to the folder containing audio files')
-    parser.add_argument('-i', '--input-format', default='wma', choices=['wma', 'flac', 'wav', 'm4a'], type=str, help='Input format for audio files (default: wma)')
-    parser.add_argument('-o', '--output-format', default='mp3', choices=['mp3', 'flac', 'wav', 'm4a'], type=str, help='Output format for converted files (default: mp3)')
+    parser.add_argument('-i', '--input-format', default='wma', choices=['wma', 'flac', 'wav', 'm4a', 'ogg'], type=str, help='Input format for audio files (default: wma)')
+    parser.add_argument('-o', '--output-format', default='mp3', choices=['mp3', 'flac', 'wav', 'm4a', 'ogg'], type=str, help='Output format for converted files (default: mp3)')
     parser.add_argument('-l', '--log-file', default='audio_conversion.log', type=str, help='Log file path (default: audio_conversion.log)')
     parser.add_argument('-a', '--action', choices=['none', 'remove', 'move'], default='none', help='Action for original audio files after conversion: none (default), remove, or move')
     parser.add_argument('-w', '--wma-destination', default='audio_backup', type=str, help='Destination folder for moved audio files (default: audio_backup)')
