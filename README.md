@@ -9,12 +9,17 @@ This is a command-line tool for converting audio files from one format to anothe
 - Selectable audio quality for output files (low, medium, high)
 - Optional actions for original audio files after conversion (none, remove, or move)
 - Customizable logging levels and log file path
+- Status bar whilst running:
+```bash
+Converting:  37%|██████████████████████████████████████▍                                                                  | 787/2153 [07:51<13:23,  1.70it/s]
+```
 
 ## Requirements
 
 - Python 3.x
 - ffmpy
 - tqdm
+- ffmpeg
 
 ## Installation
 
@@ -27,6 +32,15 @@ git clone https://github.com/yourusername/audio-converter.git
 2. Install the required Python packages.
 
 pip install -r requirements.txt
+
+3. Install ffmpeg
+
+Mac/Brew:
+`brew install fmpeg`
+
+Linux/Ubuntu/apt:
+
+`sudo apt install ffmpeg -y`
 
 ## Usage
 
@@ -66,6 +80,10 @@ optional arguments:
 2. Convert all FLAC files in a folder to M4A files with medium quality and remove the original files after conversion:
 
 `python audio_converter.py -f /path/to/your/folder -i flac -o m4a -q medium -a remove`
+
+3. Convert multiple types:
+
+`python3 audio_converter.py --folder-path /path/to/folder --input-format wma flac m4a --output-format mp3`
 
 ## License
 

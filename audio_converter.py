@@ -26,6 +26,10 @@ Command-Line Arguments:
   -w, --wma-destination: Destination folder for moved audio files (default: audio_backup).
   --overwrite: Overwrite existing output files if they already exist.
   --log-level: Logging level: debug, info (default), warning, error, or critical.
+
+Examples: 
+  python3 audio_converter.py --folder-path /path/to/folder --input-format wma flac m4a --output-format mp3
+
 """
 
 
@@ -36,6 +40,7 @@ import logging
 import argparse
 from ffmpy import FFmpeg, FFRuntimeError
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 from tqdm import tqdm
 
 # Define audio formats and quality options
@@ -73,28 +78,82 @@ AUDIO_QUALITY = {
             "high": "-b:a 256k",
         },
     },
+    "ogg": {
+        "codec": "libvorbis",
+        "options": {
+            "low": "-qscale:a 3",
+            "medium": "-qscale:a 5",
+            "high": "-qscale:a 7",
+        },
+    },
+    "aac": {
+        "codec": "aac",
+        "options": {
+            "low": "-b:a 64k",
+            "medium": "-b:a 128k",
+            "high": "-b:a 256k",
+        },
+    },
+    "alac": {
+        "codec": "alac",
+        "options": {
+            "low": "",
+            "medium": "",
+            "high": "",
+        },
+    },
+    "opus": {
+        "codec": "libopus",
+        "options": {
+            "low": "-b:a 64k",
+            "medium": "-b:a 128k",
+            "high": "-b:a 192k",
+        },
+    },
+    "ape": {
+        "codec": "ape",
+        "options": {
+            "low": "",
+            "medium": "",
+            "high": "",
+        },
+    },
+    "aiff": {
+        "codec": "pcm_s16be",
+        "options": {
+            "low": "",
+            "medium": "",
+            "high": "",
+        },
+    },
     # Add more audio formats and quality presets here...
 }
 
-def find_audio_files(dir_path, input_format):
-    # Find audio files with a specific format in a directory and its subdirectories
+SUPPORTED_FORMATS = list(AUDIO_QUALITY.keys())
+
+def find_audio_files(dir_path, input_formats, output_format):
+    # Find audio files with specific formats in a directory and its subdirectories
     audio_files = []
+
+    # If 'all' is specified as an input format, use all supported formats
+    if 'all' in input_formats:
+        input_formats = [fmt for fmt in SUPPORTED_FORMATS if fmt != output_format]
 
     for root, _, files in os.walk(dir_path):
         for file in files:
-            if file.lower().endswith(f'.{input_format.lower()}'):
+            file_extension = file.lower().split('.')[-1]
+            if file_extension in input_formats:
                 file_path = os.path.join(root, file)
                 audio_files.append(file_path)
 
     return audio_files
-
 
 def convert_audio(input_file, output_format, input_format, audio_quality, overwrite):
     # Convert an audio file from one format to another
     output_file = input_file[:-len(input_format)] + f'.{output_format}'
     
     if os.path.exists(output_file) and not overwrite:
-        return (False, "FileExists")
+        return (False, (input_file, output_file))
 
     codec = AUDIO_QUALITY[output_format]["codec"]
     ffmpeg_options = f'-loglevel panic -y {AUDIO_QUALITY[output_format]["options"][audio_quality]} -acodec {codec}'
@@ -104,8 +163,7 @@ def convert_audio(input_file, output_format, input_format, audio_quality, overwr
         ff.run()
     except FFRuntimeError as e:
         return (False, f"{input_file}: {str(e)}")
-    return (True, output_file)
-
+    return (True, (input_file, output_file))
 
 
 def main(args):
@@ -120,6 +178,10 @@ def main(args):
     overwrite = args.overwrite
     log_level = args.log_level.upper()
 
+    if input_format == output_format:
+        logging.error("Input and output formats are the same. Conversion not needed.")
+        return
+
     # Parse and assign command-line arguments
     log_level_obj = getattr(logging, log_level, None)
     if not isinstance(log_level_obj, int):
@@ -131,11 +193,13 @@ def main(args):
     logging.info("Script started")
 
     # Scan for and count the number of input format files
-    logging.info(f"Scanning {folder_path} for {input_format.upper()} files")
-    audio_files = find_audio_files(folder_path, input_format)
+    input_formats_string = ', '.join([fmt.upper() for fmt in input_format])
+    logging.info(f"Scanning {folder_path} for {input_formats_string} files")
+    audio_files = find_audio_files(folder_path, input_format, output_format)
+
     # If no input format files found, log a warning and exit
     if not audio_files:
-        logging.warning(f"No {input_format.upper()} files found.")
+        logging.warning(f"No {', '.join(input_format).upper()} files found.")
         return
 
     logging.info(f"Found {len(audio_files)} {input_format.upper()} files. Converting to {output_format.upper()}...")
@@ -150,9 +214,10 @@ def main(args):
         # Iterate over the completed futures, handling the results
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Converting"):
             success, result = future.result()
-            
+
             if success:
                 input_file, output_file = result
+
                 input_size = os.path.getsize(input_file)
                 output_size = os.path.getsize(output_file)
                 logging.info(f"Converted {input_file} ({input_size} bytes) to {output_file} ({output_size} bytes)")
@@ -183,8 +248,8 @@ if __name__ == '__main__':
     # Set up the argument parser and parse the command-line arguments
     parser = argparse.ArgumentParser(description='Convert audio files in a given folder and its subfolders.')
     parser.add_argument('-f', '--folder-path', required=True, type=str, help='Path to the folder containing audio files')
-    parser.add_argument('-i', '--input-format', default='wma', choices=['wma', 'flac', 'wav', 'm4a'], type=str, help='Input format for audio files (default: wma)')
-    parser.add_argument('-o', '--output-format', default='mp3', choices=['mp3', 'flac', 'wav', 'm4a'], type=str, help='Output format for converted files (default: mp3)')
+    parser.add_argument('-i', '--input-format', nargs='*', default=['wma'], choices=SUPPORTED_FORMATS + ['all'], type=str, help='Input format for audio files (default: wma)')
+    parser.add_argument('-o', '--output-format', default='mp3', choices=['mp3', 'flac', 'wav', 'm4a', 'aac', 'alac', 'opus', 'ape', 'aiff'], type=str, help='Output format for converted files (default: mp3)')
     parser.add_argument('-l', '--log-file', default='audio_conversion.log', type=str, help='Log file path (default: audio_conversion.log)')
     parser.add_argument('-a', '--action', choices=['none', 'remove', 'move'], default='none', help='Action for original audio files after conversion: none (default), remove, or move')
     parser.add_argument('-w', '--wma-destination', default='audio_backup', type=str, help='Destination folder for moved audio files (default: audio_backup)')
