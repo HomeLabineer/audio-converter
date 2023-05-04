@@ -9,6 +9,10 @@ This is a command-line tool for converting audio files from one format to anothe
 - Selectable audio quality for output files (low, medium, high)
 - Optional actions for original audio files after conversion (none, remove, or move)
 - Customizable logging levels and log file path
+- Status bar whilst running:
+```bash
+Converting:  37%|██████████████████████████████████████▍                                                                  | 787/2153 [07:51<13:23,  1.70it/s]
+```
 
 ## Requirements
 
