@@ -36,6 +36,7 @@ import logging
 import argparse
 from ffmpy import FFmpeg, FFRuntimeError
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 from tqdm import tqdm
 
 # Define audio formats and quality options
@@ -94,7 +95,7 @@ def convert_audio(input_file, output_format, input_format, audio_quality, overwr
     output_file = input_file[:-len(input_format)] + f'.{output_format}'
     
     if os.path.exists(output_file) and not overwrite:
-        return (False, "FileExists")
+        return (False, (input_file, output_file))
 
     codec = AUDIO_QUALITY[output_format]["codec"]
     ffmpeg_options = f'-loglevel panic -y {AUDIO_QUALITY[output_format]["options"][audio_quality]} -acodec {codec}'
@@ -104,8 +105,7 @@ def convert_audio(input_file, output_format, input_format, audio_quality, overwr
         ff.run()
     except FFRuntimeError as e:
         return (False, f"{input_file}: {str(e)}")
-    return (True, output_file)
-
+    return (True, (input_file, output_file))
 
 
 def main(args):
@@ -150,9 +150,10 @@ def main(args):
         # Iterate over the completed futures, handling the results
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Converting"):
             success, result = future.result()
-            
+
             if success:
                 input_file, output_file = result
+
                 input_size = os.path.getsize(input_file)
                 output_size = os.path.getsize(output_file)
                 logging.info(f"Converted {input_file} ({input_size} bytes) to {output_file} ({output_size} bytes)")

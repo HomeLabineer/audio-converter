@@ -15,6 +15,7 @@ This is a command-line tool for converting audio files from one format to anothe
 - Python 3.x
 - ffmpy
 - tqdm
+- ffmpeg
 
 ## Installation
 
@@ -27,6 +28,15 @@ git clone https://github.com/yourusername/audio-converter.git
 2. Install the required Python packages.
 
 pip install -r requirements.txt
+
+3. Install ffmpeg
+
+Mac/Brew:
+`brew install fmpeg`
+
+Linux/Ubuntu/apt:
+
+`sudo apt install ffmpeg -y`
 
 ## Usage
 
