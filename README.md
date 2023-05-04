@@ -81,6 +81,10 @@ optional arguments:
 
 `python audio_converter.py -f /path/to/your/folder -i flac -o m4a -q medium -a remove`
 
+3. Convert multiple types:
+
+`python3 audio_converter.py --folder-path /path/to/folder --input-format wma flac m4a --output-format mp3`
+
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
