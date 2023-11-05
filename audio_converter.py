@@ -259,8 +259,7 @@ if __name__ == '__main__':
     parser.add_argument('--log-level', default='info', type=str, help='Logging level: debug, info (default), warning, error, or critical')
     parser.add_argument('-q', '--audio-quality', default='high', choices=['low', 'medium', 'high'], type=str, help='Audio quality for output files (default: high)')
     parser.add_argument('--max-workers', default=None, type=int, help='Maximum number of worker threads to use for audio conversion (default: number of CPUs)')
-    parser.add_argument('--no-preserve-metadata', action='store_false', default=True, help='Do not preserve metadata from original files (default: preserve metadata)')
-
+    parser.add_argument('--no-preserve-metadata', action='store_false', default=True, dest='preserve_metadata', help='Do not preserve metadata from original files (default: preserve metadata)')
 
     args = parser.parse_args()
     
