@@ -11,6 +11,7 @@ This is a command-line tool for converting audio files from one format to anothe
 - Selectable audio quality for output files (low, medium, high)
 - Optional actions for original audio files after conversion (none, remove, or move)
 - Customizable logging levels and log file path
+- Preserve metadata from original audio files during conversion (can be disabled with `--no-preserve-metadata` flag)
 - Status bar whilst running:
 ```bash
 Converting:  37%|██████████████████████████████████████▍                                                                  | 787/2153 [07:51<13:23,  1.70it/s]
@@ -56,7 +57,7 @@ Linux/Ubuntu/apt:
 ```bash
 usage: audio_converter.py [-h] -f FOLDER_PATH [-i {wma,flac,wav,m4a,ogg,aac,alac,opus,ape,aiff,all} [{wma,flac,wav,m4a,ogg,aac,alac,opus,ape,aiff,all} ...]] [-o {mp3,flac,wav,m4a,aac,alac,opus,ape,aiff}]
                            [-l LOG_FILE] [-a {none,remove,move}] [-w WMA_DESTINATION] [--overwrite] [--log-level LOG_LEVEL]
-                           [-q {low,medium,high}]
+                           [-q {low,medium,high}] [--no-preserve-metadata]
 
 Convert audio files in a given folder and its subfolders.
 
@@ -79,6 +80,8 @@ optional arguments:
                         Logging level: debug, info (default), warning, error, or critical
   -q {low,medium,high}, --audio-quality {low,medium,high}
                         Audio quality for output files (default: high)
+  --no-preserve-metadata
+                        Do not preserve metadata from original files (default: preserve metadata)
 ```
 
 ---
@@ -95,6 +98,8 @@ optional arguments:
 
 3. By default, the ThreadPoolExecutor uses the number of CPUs on the machine as the number of threads in the pool. You can explicitly set the number of threads by passing the `--max_workers` parameter.  If you have 8 cores, try 4 or 6 to prevent maxing out all cores.  Leaving this setting on default can max out all CPU cores easily as ffmpeg wants to work as quickly as possible. 
 
+4. The `--no-preserve-metadata` flag allows you to disable metadata preservation from the original files during conversion. By default, the script preserves metadata, but in cases where you want to discard this information, you can use this flag. Example usage: `--no-preserve-metadata`.
+
 ---
 
 ## Examples
@@ -110,6 +115,10 @@ optional arguments:
 3. Convert multiple types:
 
 `python3 audio_converter.py --folder-path /path/to/folder --input-format wma flac m4a --output-format mp3`
+
+4. Convert all WMA files in a folder to MP3 files with high quality, while not preserving metadata:
+
+`python audio_converter.py -f /path/to/your/folder --no-preserve-metadata`
 
 ---
 

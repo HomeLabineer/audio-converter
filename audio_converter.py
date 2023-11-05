@@ -148,7 +148,7 @@ def find_audio_files(dir_path, input_formats, output_format):
 
     return audio_files
 
-def convert_audio(input_file, output_format, input_format, audio_quality, overwrite):
+def convert_audio(input_file, output_format, input_format, audio_quality, overwrite, preserve_metadata):
     # Convert an audio file from one format to another
     output_file = input_file[:-len(input_format)] + f'.{output_format}'
     
@@ -157,6 +157,8 @@ def convert_audio(input_file, output_format, input_format, audio_quality, overwr
 
     codec = AUDIO_QUALITY[output_format]["codec"]
     ffmpeg_options = f'-loglevel panic -y {AUDIO_QUALITY[output_format]["options"][audio_quality]} -acodec {codec}'
+    if preserve_metadata:
+        ffmpeg_options += ' -map_metadata 0'
 
     ff = FFmpeg(inputs={input_file: None}, outputs={output_file: ffmpeg_options})
     try:
@@ -209,7 +211,7 @@ def main(args):
     with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
         futures = []
         for input_file in audio_files:
-            futures.append(executor.submit(convert_audio, input_file, output_format, input_format, audio_quality, overwrite))
+            futures.append(executor.submit(convert_audio, input_file, output_format, input_format, audio_quality, overwrite, args.preserve_metadata))
 
         # Iterate over the completed futures, handling the results
         for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Converting"):
@@ -257,6 +259,7 @@ if __name__ == '__main__':
     parser.add_argument('--log-level', default='info', type=str, help='Logging level: debug, info (default), warning, error, or critical')
     parser.add_argument('-q', '--audio-quality', default='high', choices=['low', 'medium', 'high'], type=str, help='Audio quality for output files (default: high)')
     parser.add_argument('--max-workers', default=None, type=int, help='Maximum number of worker threads to use for audio conversion (default: number of CPUs)')
+    parser.add_argument('--no-preserve-metadata', action='store_false', default=True, dest='preserve_metadata', help='Do not preserve metadata from original files (default: preserve metadata)')
 
     args = parser.parse_args()
     
